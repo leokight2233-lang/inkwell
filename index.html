@@ -37,7 +37,12 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
 .story-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s;animation:fu 0.2s ease;}
 .story-card:hover{border-color:var(--amber);transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,0.5);}
-.story-cover{height:110px;display:flex;align-items:center;justify-content:center;font-size:50px;}
+.story-cover{height:110px;display:flex;align-items:center;justify-content:center;font-size:50px;position:relative;overflow:hidden;}
+.story-cover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.story-cover-icon{position:relative;z-index:1;}
+.story-cover-upload{position:absolute;inset:0;background:rgba(0,0,0,0.52);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s;z-index:2;font-size:12px;color:#fff;font-family:'DM Mono',monospace;letter-spacing:0.04em;gap:10px;}
+.story-card:hover .story-cover-upload{opacity:1;}
+.cov-del-btn{background:rgba(192,80,64,0.85);border:none;color:#fff;border-radius:5px;padding:4px 8px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;letter-spacing:0.03em;}
 .story-info{padding:12px 14px 14px;}
 .story-info h3{font-family:'Playfair Display',serif;font-size:15px;margin-bottom:3px;}
 .story-info p{font-size:12px;color:var(--text3);}
@@ -55,13 +60,12 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
 #app-shell{display:none;height:100vh;position:relative;}
 #app-shell.on{display:block;}
 
-/* Hamburger — always in top-left of workspace */
+/* Hamburger — lives inside the topbar row, never overlaps title */
 #hbg{
-  position:fixed;top:9px;left:10px;z-index:70;
-  background:var(--bg2);border:1px solid var(--border);color:var(--text2);
-  border-radius:7px;width:36px;height:36px;font-size:17px;
-  display:none;align-items:center;justify-content:center;cursor:pointer;
-  transition:all 0.15s;
+  background:none;border:1px solid var(--border);color:var(--text2);
+  border-radius:7px;width:34px;height:34px;font-size:17px;
+  display:none;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.15s;flex-shrink:0;
 }
 #app-shell.on #hbg{display:flex;}
 #hbg:hover{border-color:var(--amber);color:var(--amber);}
@@ -95,7 +99,8 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
 
 /* ─── WORKSPACE ─── */
 #ws{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-.topbar{padding:10px 14px 10px 54px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);gap:12px;flex-shrink:0;}
+.topbar{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);gap:10px;flex-shrink:0;}
+.topbar-l{display:flex;align-items:center;gap:10px;min-width:0;}
 .topbar h2{font-family:'Playfair Display',serif;font-size:17px;}
 .topbar .sub{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:1px;}
 .tbr{display:flex;gap:8px;align-items:center;}
@@ -188,8 +193,11 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
 .wcard p{font-size:12px;color:var(--text3);line-height:1.4;}
 
 .maps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px;}
-.map-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;}
+.map-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
 .map-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+.map-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.15s;z-index:5;}
+.map-card:hover .map-del{opacity:1;}
+.map-del:hover{background:var(--red);}
 .miw{height:150px;background:var(--bg4);overflow:hidden;}
 .miw img{width:100%;height:100%;object-fit:cover;}
 .mph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:0.18;}
@@ -219,11 +227,13 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
 .edet{flex:1;overflow-y:auto;padding:22px 24px;}
 .edet::-webkit-scrollbar{width:4px;}
 .edet::-webkit-scrollbar-thumb{background:var(--border);}
-.imu{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:15px;overflow:hidden;}
+.imu{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:15px;overflow:hidden;position:relative;}
 .imu img{max-width:100%;max-height:190px;border-radius:6px;display:block;margin:0 auto;}
 .imu.has{border-color:var(--border);padding:4px;}
 .imu:not(.has):hover{border-color:var(--amber);background:var(--amber-glow);}
 .imu p{color:var(--text3);font-size:13px;margin-top:5px;}
+.img-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;z-index:3;}
+.img-del:hover{background:var(--red);}
 
 /* ─── LIGHTBOX ─── */
 .lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:200;align-items:center;justify-content:center;flex-direction:column;}
@@ -275,7 +285,6 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
 
 <!-- ════════ APP SHELL ════════ -->
 <div id="app-shell">
-  <button id="hbg" onclick="toggleSB()" title="Menu">☰</button>
   <div id="sb-ov" onclick="closeSB()"></div>
 
   <!-- SIDEBAR -->
@@ -309,9 +318,12 @@ body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);hei
   <!-- WORKSPACE -->
   <div id="ws">
     <div class="topbar">
-      <div>
-        <h2 id="tt">Manuscript</h2>
-        <div class="sub" id="ts">Write your story</div>
+      <div class="topbar-l">
+        <button id="hbg" onclick="toggleSB()" title="Menu">☰</button>
+        <div>
+          <h2 id="tt">Manuscript</h2>
+          <div class="sub" id="ts">Write your story</div>
+        </div>
       </div>
       <div class="tbr">
         <span id="save-ind">✦ saved</span>
@@ -454,13 +466,21 @@ let CID = null; // current story id
 function renderLib(){
   document.getElementById('lib-grid').innerHTML = LIB.map(s=>`
     <div class="story-card" onclick="openStory('${s.id}')">
-      <div class="story-cover" style="background:${s.color}18;">${s.icon||'📖'}</div>
+      <div class="story-cover" style="background:${s.color}18;">
+        ${s.coverImg?`<img src="${s.coverImg}" alt="">`:''}
+        <div class="story-cover-icon">${s.coverImg?'':s.icon||'📖'}</div>
+        <div class="story-cover-upload">
+          <span onclick="event.stopPropagation();trigCoverUpload('${s.id}')" style="cursor:pointer;">📷 Photo</span>
+          ${s.coverImg?`<button class="cov-del-btn" onclick="event.stopPropagation();delCoverImg('${s.id}')">✕ Remove</button>`:''}
+        </div>
+        <input type="file" id="cov-${s.id}" accept="image/*" style="display:none" onchange="loadCoverImg('${s.id}',this)">
+      </div>
       <div class="story-info">
         <h3>${esc(s.title)}</h3>
         <p>${esc(s.genre||'Novel')}</p>
         <div class="story-footer">
           <span>${s.mod||s.created||''}</span>
-          <button class="story-del" onclick="event.stopPropagation();delStory('${s.id}')" title="Delete">🗑</button>
+          <button class="story-del" onclick="event.stopPropagation();delStory('${s.id}')" title="Delete story">🗑</button>
         </div>
       </div>
       <div class="story-accent" style="background:${s.color};"></div>
@@ -496,6 +516,19 @@ function openNewStoryModal(){
 function selIcon(el,ic){
   document.querySelectorAll('#icon-row div').forEach(d=>d.style.borderColor='transparent');
   el.style.borderColor='var(--amber)';MS.icon=ic;
+}
+function trigCoverUpload(id){document.getElementById('cov-'+id).click();}
+function loadCoverImg(id,inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const s=LIB.find(x=>x.id===id);
+    if(s){s.coverImg=e.target.result;saveLib();renderLib();}
+  };r.readAsDataURL(f);
+}
+function delCoverImg(id){
+  const s=LIB.find(x=>x.id===id);
+  if(s){delete s.coverImg;saveLib();renderLib();}
 }
 function delStory(id){
   if(!confirm('Delete this story? This cannot be undone.'))return;
@@ -749,6 +782,7 @@ function renderCharDet(id){
       <div style="flex:0 0 170px;">
         <div class="imu ${c.image?'has':''}" onclick="trigImg('ci-${c.id}')">
           ${c.image?`<img src="${c.image}">`:`<div style="font-size:36px;opacity:0.2;">◉</div><p>Upload portrait</p>`}
+          ${c.image?`<button class="img-del" onclick="event.stopPropagation();delCharImg('${c.id}')" title="Remove image">×</button>`:''}
         </div>
         <input type="file" id="ci-${c.id}" accept="image/*" style="display:none" onchange="loadCImg('${c.id}',this)">
       </div>
@@ -770,6 +804,7 @@ function renderCharDet(id){
 }
 function trigImg(id){document.getElementById(id).click();}
 function loadCImg(id,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const c=S.chars.find(x=>x.id===id);if(c){c.image=e.target.result;renderCharDet(id);sched();}};r.readAsDataURL(f);}
+function delCharImg(id){const c=S.chars.find(x=>x.id===id);if(c){c.image=null;renderCharDet(id);sched();}}
 function updChar(id,k,v){const c=S.chars.find(x=>x.id===id);if(c){c[k]=v;if(k==='name')document.getElementById('tt').textContent=v;if(k==='role')document.getElementById('ts').textContent=v||'Character';sched();}}
 function delChar(id){if(!confirm('Delete?'))return;S.chars=S.chars.filter(x=>x.id!==id);nav('characters');sched();}
 
@@ -786,6 +821,7 @@ function renderLocDet(id){
       <div style="flex:0 0 160px;">
         <div class="imu ${l.image?'has':''}" onclick="trigImg('wi-${l.id}')">
           ${l.image?`<img src="${l.image}">`:`<div style="font-size:32px;opacity:0.2;">⌖</div><p>Upload image</p>`}
+          ${l.image?`<button class="img-del" onclick="event.stopPropagation();delWImg('locations','${l.id}')" title="Remove image">×</button>`:''}
         </div>
         <input type="file" id="wi-${l.id}" accept="image/*" style="display:none" onchange="loadWImg('locations','${l.id}',this)">
       </div>
@@ -814,6 +850,7 @@ function renderMaps(){
   }
   document.getElementById('maps-grid').innerHTML=S.maps.map(m=>`
     <div class="map-card" onclick="openLB('${m.id}')">
+      <button class="map-del" onclick="event.stopPropagation();delMap('${m.id}')" title="Delete">×</button>
       <div class="miw">${m.data?`<img src="${m.data}" alt="${esc(m.name)}">`:`<div class="mph">🗺</div>`}</div>
       <div class="mbody"><h4>${esc(m.name)}</h4><p>${esc(m.date)}</p></div>
     </div>
@@ -828,6 +865,7 @@ function handleUp(files){
 }
 function openLB(id){const m=S.maps.find(x=>x.id===id);if(!m)return;document.getElementById('lb-img').src=m.data;document.getElementById('lb-cap').textContent=m.name;document.getElementById('lb').classList.add('on');}
 function closeLB(){document.getElementById('lb').classList.remove('on');}
+function delMap(id){if(!confirm('Delete this image?'))return;S.maps=S.maps.filter(x=>x.id!==id);renderMaps();sched();}
 
 // ════════════════════════════════════
 // WIKI
@@ -858,6 +896,7 @@ function renderWD(combined){
         <div style="flex:0 0 160px;">
           <div class="imu ${item.image?'has':''}" onclick="trigImg('wi-${id}')">
             ${item.image?`<img src="${item.image}">`:`<div style="font-size:30px;opacity:0.2;">${icon}</div><p>Upload image</p>`}
+            ${item.image?`<button class="img-del" onclick="event.stopPropagation();delWImg('${sec}','${id}')" title="Remove image">×</button>`:''}
           </div>
           <input type="file" id="wi-${id}" accept="image/*" style="display:none" onchange="loadWImg('${sec}','${id}',this)">
         </div>
@@ -878,6 +917,11 @@ function loadWImg(sec,id,inp){
     const item=arr.find(x=>x.id===id);
     if(item){item.image=e.target.result;if(sec==='locations')renderLocDet(id);else renderWD(sec+':'+id);sched();}
   };r.readAsDataURL(f);
+}
+function delWImg(sec,id){
+  const arr=S[sec==='locations'?'locs':sec==='encyclopedia'?'enc':sec==='research'?'res':sec]||[];
+  const item=arr.find(x=>x.id===id);
+  if(item){item.image=null;if(sec==='locations')renderLocDet(id);else renderWD(sec+':'+id);sched();}
 }
 function updW(sec,id,k,v){
   const arr=S[sec==='locations'?'locs':sec==='encyclopedia'?'enc':sec==='research'?'res':sec]||[];
