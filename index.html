@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Your Story Universe</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inkwell">
+<meta name="theme-color" content="#0e0c0a">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0c0a;--bg2:#161310;--bg3:#1e1a16;--bg4:#2a241e;
+  --border:#3a3028;--text:#e8ddd0;--text2:#a89880;--text3:#6b5e50;
+  --amber:#c8822a;--amber2:#e09840;--amber-glow:rgba(200,130,42,0.12);
+  --red:#c05040;--green:#5a8060;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;font-size:17px;}
+
+/* MOBILE TOUCH */
+@media (max-width: 600px) {
+  #sidebar{width:220px!important;min-width:220px!important;}
+  #sidebar.collapsed{width:0!important;min-width:0!important;border:none!important;}
+  .ms-area{padding:24px 5%!important;}
+  .topbar{padding:10px 14px!important;}
+  .panel-body{padding:16px 14px!important;}
+  .char-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))!important;}
+  .wiki-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;}
+  body{font-size:16px;}
+}
+/* SIDEBAR */
+#sidebar{width:248px;min-width:248px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width 0.25s ease,min-width 0.25s ease;position:relative;z-index:10;}
+#sidebar.collapsed{width:52px;min-width:52px;}
+.logo{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;}
+.logo-text h1{font-family:'Playfair Display',serif;font-size:19px;color:var(--amber2);}
+.logo-text p{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:1px;}
+#sidebar.collapsed .logo-text{display:none;}
+#sidebar.collapsed .logo{justify-content:center;}
+.toggle-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:19px;padding:2px 4px;line-height:1;flex-shrink:0;transition:color 0.15s,transform 0.25s;}
+.toggle-btn:hover{color:var(--amber);}
+#sidebar.collapsed .toggle-btn{transform:rotate(180deg);}
+.nav-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 0 16px;}
+.nav-scroll::-webkit-scrollbar{width:3px;}
+.nav-scroll::-webkit-scrollbar-thumb{background:var(--border);}
+.nav-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;padding:10px 14px 4px;white-space:nowrap;overflow:hidden;transition:opacity 0.2s,height 0.2s;}
+#sidebar.collapsed .nav-label{opacity:0;height:0;padding:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;color:var(--text2);font-size:14px;transition:all 0.15s;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--amber-glow);color:var(--amber2);border-left-color:var(--amber);}
+.nav-item .ni{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.nav-item .nl{transition:opacity 0.2s;}
+#sidebar.collapsed .nl{opacity:0;width:0;overflow:hidden;}
+#sidebar.collapsed .nav-item{padding:10px;justify-content:center;border-left:none;}
+#sidebar.collapsed .nav-item.active{background:var(--amber-glow);}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{padding:13px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);gap:12px;flex-shrink:0;}
+.topbar h2{font-family:'Playfair Display',serif;font-size:18px;}
+.topbar .sub{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:1px;}
+.topbar-r{display:flex;gap:8px;align-items:center;}
+.ai-btn{background:var(--amber);color:#0e0c0a;border:none;padding:7px 14px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.08em;cursor:pointer;font-weight:500;transition:all 0.15s;}
+.ai-btn:hover{background:var(--amber2);transform:translateY(-1px);}
+.icon-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;transition:all 0.15s;}
+.icon-btn:hover{border-color:var(--amber);color:var(--amber);}
+
+/* CONTENT */
+#content-area{flex:1;overflow:hidden;display:flex;}
+.panel{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.panel.active{display:flex;}
+.panel-body{flex:1;overflow-y:auto;padding:26px 30px;}
+.panel-body::-webkit-scrollbar{width:4px;}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* COMMON */
+.sec-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--text2);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.add-btn{border:1px dashed var(--border);border-radius:7px;background:none;color:var(--text3);font-family:'Crimson Text',serif;font-size:14px;cursor:pointer;padding:8px 14px;transition:all 0.15s;text-align:center;}
+.add-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-glow);}
+.fl{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+.fi{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 13px;color:var(--text);font-family:'Crimson Text',serif;font-size:16px;outline:none;resize:none;transition:border-color 0.15s;}
+.fi:focus{border-color:var(--amber);}
+.fg{margin-bottom:18px;}
+
+/* MANUSCRIPT */
+.ch-sidebar{width:190px;min-width:190px;border-right:1px solid var(--border);background:var(--bg2);overflow-y:auto;padding:10px 0;}
+.ch-item{padding:8px 14px;cursor:pointer;color:var(--text2);font-size:13.5px;transition:all 0.15s;border-left:2px solid transparent;}
+.ch-item:hover{background:var(--bg3);color:var(--text);}
+.ch-item.active{color:var(--amber2);border-left-color:var(--amber);background:var(--amber-glow);}
+.ch-item .chn{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
+.ms-toolbar{padding:9px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--bg2);}
+.ms-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'DM Mono',monospace;transition:all 0.15s;}
+.ms-btn:hover{border-color:var(--amber);color:var(--amber);}
+.ms-div{width:1px;height:18px;background:var(--border);margin:0 3px;}
+.ms-area{flex:1;overflow-y:auto;padding:44px 18%;}
+.ms-area::-webkit-scrollbar{width:4px;}
+.ms-area::-webkit-scrollbar-thumb{background:var(--border);}
+.ch-title-in{font-family:'Playfair Display',serif;font-size:30px;color:var(--text);background:none;border:none;outline:none;width:100%;margin-bottom:22px;border-bottom:1px solid var(--border);padding-bottom:10px;line-height:1.3;}
+.ch-title-in::placeholder{color:var(--text3);}
+.ms-editor{min-height:60vh;outline:none;font-family:'Crimson Text',serif;font-size:18px;line-height:1.85;color:var(--text);caret-color:var(--amber2);}
+.ms-editor:empty::before{content:"Begin your story here…";color:var(--text3);pointer-events:none;}
+.wc{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);padding:7px 22px;border-top:1px solid var(--border);text-align:right;}
+
+/* CHARACTER CARDS */
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+.char-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;}
+.char-card:hover{border-color:var(--amber);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.char-portrait{height:130px;background:var(--bg4);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.char-portrait img{width:100%;height:100%;object-fit:cover;}
+.char-pp{font-size:44px;opacity:0.25;}
+.char-ov{position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s;font-size:12px;color:var(--amber);font-family:'DM Mono',monospace;}
+.char-card:hover .char-ov{opacity:1;}
+.char-body{padding:11px 13px;}
+.char-body h4{font-family:'Playfair Display',serif;font-size:14px;margin-bottom:2px;}
+.char-body p{font-size:12px;color:var(--text3);}
+.char-bar{height:3px;}
+.add-card{background:var(--bg3);border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:all 0.15s;min-height:190px;color:var(--text3);}
+.add-card:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-glow);}
+.add-card .plus{font-size:26px;}
+
+/* WIKI CARDS */
+.wiki-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px;}
+.wiki-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0;cursor:pointer;transition:all 0.2s;overflow:hidden;}
+.wiki-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+.wiki-card .wc-top{height:3px;}
+.wiki-card .wc-body{padding:13px 15px;}
+.wiki-card .wc-icon{font-size:18px;margin-bottom:5px;opacity:0.6;}
+.wiki-card h4{font-family:'Playfair Display',serif;font-size:14px;margin-bottom:3px;}
+.wiki-card p{font-size:12.5px;color:var(--text3);line-height:1.4;}
+
+/* MAPS */
+.maps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.map-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;}
+.map-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+.map-img-wrap{height:170px;background:var(--bg4);overflow:hidden;position:relative;}
+.map-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform 0.3s;}
+.map-card:hover .map-img-wrap img{transform:scale(1.04);}
+.map-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:38px;opacity:0.18;}
+.map-body{padding:11px 13px;}
+.map-body h4{font-family:'Playfair Display',serif;font-size:13px;}
+.map-body p{font-size:11px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:22px;}
+.upload-zone:hover,.upload-zone.dov{border-color:var(--amber);background:var(--amber-glow);}
+.upload-zone .uz-icon{font-size:34px;margin-bottom:9px;}
+.upload-zone p{color:var(--text3);font-size:13px;}
+.upload-zone strong{color:var(--amber);}
+
+/* TIMELINE */
+.tl-wrap{position:relative;padding:20px 0 20px 200px;}
+.tl-line{position:absolute;left:200px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-event{display:flex;gap:0;margin-bottom:28px;position:relative;align-items:flex-start;}
+.tl-date-col{position:absolute;right:calc(100% + 16px);text-align:right;width:180px;}
+.tl-date{font-family:'DM Mono',monospace;font-size:12px;color:var(--amber);}
+.tl-era{font-size:11px;color:var(--text3);margin-top:1px;}
+.tl-dot{width:14px;height:14px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:4px;position:absolute;left:-7px;border:2px solid var(--bg2);z-index:1;}
+.tl-dot.minor{background:var(--border);}
+.tl-content{margin-left:22px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 15px;}
+.tl-content h4{font-family:'Playfair Display',serif;font-size:14px;margin-bottom:3px;}
+.tl-content p{font-size:13.5px;color:var(--text2);line-height:1.5;}
+
+/* ENTITY DETAIL */
+.ent-detail{flex:1;overflow-y:auto;padding:26px 30px;}
+.ent-detail::-webkit-scrollbar{width:4px;}
+.ent-detail::-webkit-scrollbar-thumb{background:var(--border);}
+.img-upload{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:18px;overflow:hidden;}
+.img-upload img{max-width:100%;max-height:220px;border-radius:6px;display:block;margin:0 auto;}
+.img-upload.has-img{border-color:var(--border);padding:6px;}
+.img-upload:not(.has-img):hover{border-color:var(--amber);background:var(--amber-glow);}
+.img-upload p{color:var(--text3);font-size:13px;margin-top:6px;}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;align-items:center;justify-content:center;flex-direction:column;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:90vw;max-height:85vh;border-radius:8px;object-fit:contain;}
+.lb-close{position:absolute;top:18px;right:22px;background:none;border:none;color:var(--text);font-size:30px;cursor:pointer;}
+.lb-cap{color:var(--text2);font-size:13px;margin-top:10px;font-family:'DM Mono',monospace;}
+
+/* AI PANEL */
+#ai-panel{width:310px;min-width:310px;border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;display:none;}
+#ai-panel.open{display:flex;}
+.ai-hdr{padding:13px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ai-hdr h3{font-family:'Playfair Display',serif;font-size:15px;color:var(--amber2);}
+.cls-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;}
+.cls-btn:hover{color:var(--text);}
+.ai-msgs{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:11px;}
+.ai-msgs::-webkit-scrollbar{width:3px;}
+.ai-msgs::-webkit-scrollbar-thumb{background:var(--border);}
+.msg{border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.55;animation:fu 0.2s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{background:var(--bg4);border:1px solid var(--border);color:var(--text);margin-left:14px;}
+.msg.ai{background:var(--amber-glow);border:1px solid rgba(200,130,42,0.2);color:var(--text);margin-right:14px;}
+.msg.sys{background:var(--bg3);color:var(--text3);font-size:12px;font-style:italic;text-align:center;border:1px solid var(--border);}
+.typing{display:none;align-items:center;gap:4px;padding:10px 12px;background:var(--amber-glow);border:1px solid rgba(200,130,42,0.2);border-radius:8px;margin-right:14px;}
+.typing.show{display:flex;}
+.td{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:blink 1.2s infinite;}
+.td:nth-child(2){animation-delay:0.2s}.td:nth-child(3){animation-delay:0.4s}
+@keyframes blink{0%,80%,100%{opacity:0.3}40%{opacity:1}}
+.qps{padding:9px 13px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:5px;}
+.qp{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.qp:hover{border-color:var(--amber);color:var(--amber);}
+.ai-inp-row{padding:9px 13px;border-top:1px solid var(--border);display:flex;gap:7px;}
+.ai-inp{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 11px;color:var(--text);font-family:'Crimson Text',serif;font-size:15px;outline:none;resize:none;max-height:90px;line-height:1.4;}
+.ai-inp:focus{border-color:var(--amber);}
+.send-btn{background:var(--amber);border:none;border-radius:6px;width:34px;height:34px;color:#0e0c0a;font-size:17px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.send-btn:hover{background:var(--amber2);}
+.send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:26px;width:440px;max-width:95vw;animation:fu 0.2s ease;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Playfair Display',serif;font-size:19px;margin-bottom:16px;color:var(--amber2);}
+.modal-btns{display:flex;gap:9px;margin-top:18px;justify-content:flex-end;}
+.btn-g{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 16px;border-radius:6px;font-family:'Crimson Text',serif;font-size:15px;cursor:pointer;transition:all 0.15s;}
+.btn-g:hover{border-color:var(--text2);color:var(--text);}
+.btn-p{background:var(--amber);border:none;color:#0e0c0a;padding:7px 16px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;}
+.btn-p:hover{background:var(--amber2);}
+.color-row{display:flex;gap:8px;margin-bottom:14px;}
+.co{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;}
+.co.sel{border-color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">
+    <button class="toggle-btn" onclick="toggleSidebar()" title="Ctrl+\">‹</button>
+    <div class="logo-text">
+      <h1>✦ Inkwell</h1>
+      <p>your story universe</p>
+    </div>
+  </div>
+  <div class="nav-scroll">
+    <div class="nav-label">Story</div>
+    <div class="nav-item" onclick="nav('manuscript')" id="nav-manuscript"><span class="ni">✍</span><span class="nl">Manuscript</span></div>
+    <div class="nav-item" onclick="nav('outline')" id="nav-outline"><span class="ni">≡</span><span class="nl">Outline</span></div>
+    <div class="nav-item" onclick="nav('timeline')" id="nav-timeline"><span class="ni">⏱</span><span class="nl">Timeline</span></div>
+    <div class="nav-label">World</div>
+    <div class="nav-item" onclick="nav('characters')" id="nav-characters"><span class="ni">◉</span><span class="nl">Characters</span></div>
+    <div class="nav-item" onclick="nav('locations')" id="nav-locations"><span class="ni">⌖</span><span class="nl">Locations</span></div>
+    <div class="nav-item" onclick="nav('maps')" id="nav-maps"><span class="ni">⬡</span><span class="nl">Maps</span></div>
+    <div class="nav-item" onclick="nav('species')" id="nav-species"><span class="ni">✺</span><span class="nl">Species</span></div>
+    <div class="nav-item" onclick="nav('culture')" id="nav-culture"><span class="ni">⚘</span><span class="nl">Culture</span></div>
+    <div class="nav-label">Lore</div>
+    <div class="nav-item" onclick="nav('magic')" id="nav-magic"><span class="ni">◈</span><span class="nl">Magic</span></div>
+    <div class="nav-item" onclick="nav('religion')" id="nav-religion"><span class="ni">✦</span><span class="nl">Religion</span></div>
+    <div class="nav-item" onclick="nav('items')" id="nav-items"><span class="ni">◇</span><span class="nl">Items</span></div>
+    <div class="nav-item" onclick="nav('encyclopedia')" id="nav-encyclopedia"><span class="ni">📖</span><span class="nl">Encyclopedia</span></div>
+    <div class="nav-label">Tools</div>
+    <div class="nav-item" onclick="nav('research')" id="nav-research"><span class="ni">🔬</span><span class="nl">Research</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div>
+      <h2 id="tt">Manuscript</h2>
+      <div class="sub" id="ts">Write your story</div>
+    </div>
+    <div class="topbar-r">
+      <span id="save-ind" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--amber);opacity:0;transition:opacity 0.4s;letter-spacing:0.08em;">✦ saved</span>
+      <button class="icon-btn" id="add-btn" style="display:none" onclick="topAdd()">+ Add</button>
+      <button class="ai-btn" onclick="toggleAI()">✦ Ask AI</button>
+    </div>
+  </div>
+
+  <div id="content-area">
+
+    <!-- MANUSCRIPT -->
+    <div class="panel" id="manuscript-panel">
+      <div style="display:flex;flex:1;overflow:hidden;">
+        <div class="ch-sidebar" id="ch-sidebar">
+          <div style="padding:8px 10px 4px;">
+            <button class="add-btn" style="width:100%;font-size:12px;padding:6px;" onclick="addChapter()">+ Chapter</button>
+          </div>
+          <div id="ch-list"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <div class="ms-toolbar">
+            <button class="ms-btn" onclick="execCmd('bold')"><b>B</b></button>
+            <button class="ms-btn" onclick="execCmd('italic')"><i>I</i></button>
+            <button class="ms-btn" onclick="execCmd('underline')"><u>U</u></button>
+            <div class="ms-div"></div>
+            <button class="ms-btn" onclick="insertBreak()">— Scene Break</button>
+            <div class="ms-div"></div>
+            <button class="ms-btn" id="focus-btn" onclick="focusMode()">Focus Mode</button>
+          </div>
+          <div class="ms-area" id="ms-area">
+            <input class="ch-title-in" id="ch-title" placeholder="Chapter Title…" oninput="updateChTitle(this.value)">
+            <div class="ms-editor" id="ms-editor" contenteditable="true" oninput="onEdit()" onkeydown="editorKey(event)"></div>
+          </div>
+          <div class="wc" id="wc">0 words</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTLINE -->
+    <div class="panel" id="outline-panel">
+      <div class="panel-body" id="outline-body"></div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="panel" id="timeline-panel">
+      <div class="panel-body">
+        <div class="sec-title">Story Timeline</div>
+        <div style="position:relative;overflow:visible;">
+          <div class="tl-wrap" id="tl-wrap"></div>
+        </div>
+        <div style="padding-left:222px;margin-top:8px;">
+          <button class="add-btn" onclick="addTimelineEvent()">+ Add Event</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARACTERS -->
+    <div class="panel" id="characters-panel">
+      <div class="panel-body">
+        <div class="sec-title">Characters</div>
+        <div class="char-grid" id="char-grid"></div>
+      </div>
+    </div>
+
+    <!-- CHARACTER DETAIL -->
+    <div class="panel" id="char-detail-panel">
+      <div class="ent-detail" id="char-detail"></div>
+    </div>
+
+    <!-- LOCATIONS -->
+    <div class="panel" id="locations-panel">
+      <div class="panel-body">
+        <div class="sec-title">Locations</div>
+        <div class="wiki-grid" id="locations-grid"></div>
+      </div>
+    </div>
+
+    <!-- LOCATION DETAIL -->
+    <div class="panel" id="location-detail-panel">
+      <div class="ent-detail" id="location-detail"></div>
+    </div>
+
+    <!-- MAPS -->
+    <div class="panel" id="maps-panel">
+      <div class="panel-body">
+        <div class="sec-title">Maps &amp; Images</div>
+        <label class="upload-zone" id="dz">
+          <input type="file" accept="image/*" multiple style="display:none" onchange="handleUpload(this.files)">
+          <div class="uz-icon">🗺</div>
+          <p><strong>Click to upload</strong> or drag &amp; drop</p>
+          <p style="margin-top:3px;font-size:12px;">PNG, JPG, GIF, WebP — maps, portraits, concept art</p>
+        </label>
+        <div class="maps-grid" id="maps-grid"></div>
+      </div>
+    </div>
+
+    <!-- SPECIES -->
+    <div class="panel" id="species-panel"><div class="panel-body"><div class="sec-title">Species &amp; Races</div><div class="wiki-grid" id="species-grid"></div></div></div>
+    <!-- CULTURE -->
+    <div class="panel" id="culture-panel"><div class="panel-body"><div class="sec-title">Cultures &amp; Factions</div><div class="wiki-grid" id="culture-grid"></div></div></div>
+    <!-- MAGIC -->
+    <div class="panel" id="magic-panel"><div class="panel-body"><div class="sec-title">Magic Systems</div><div class="wiki-grid" id="magic-grid"></div></div></div>
+    <!-- RELIGION -->
+    <div class="panel" id="religion-panel"><div class="panel-body"><div class="sec-title">Religions &amp; Pantheons</div><div class="wiki-grid" id="religion-grid"></div></div></div>
+    <!-- ITEMS -->
+    <div class="panel" id="items-panel"><div class="panel-body"><div class="sec-title">Items &amp; Artifacts</div><div class="wiki-grid" id="items-grid"></div></div></div>
+    <!-- ENCYCLOPEDIA -->
+    <div class="panel" id="encyclopedia-panel"><div class="panel-body"><div class="sec-title">Encyclopedia</div><div class="wiki-grid" id="encyclopedia-grid"></div></div></div>
+    <!-- RESEARCH -->
+    <div class="panel" id="research-panel"><div class="panel-body"><div class="sec-title">Research &amp; Notes</div><div class="wiki-grid" id="research-grid"></div></div></div>
+
+    <!-- WIKI DETAIL -->
+    <div class="panel" id="wiki-detail-panel">
+      <div class="ent-detail" id="wiki-detail"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AI PANEL -->
+<div id="ai-panel">
+  <div class="ai-hdr">
+    <h3>✦ Story AI</h3>
+    <button class="cls-btn" onclick="toggleAI()">×</button>
+  </div>
+  <div class="ai-msgs" id="ai-msgs">
+    <div class="msg sys">Your story assistant is ready. Ask anything about your world, characters, or plot.</div>
+  </div>
+  <div class="typing" id="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>
+  <div class="qps">
+    <div class="qp" onclick="qp('Suggest a character flaw')">character flaw</div>
+    <div class="qp" onclick="qp('Give me a plot twist')">plot twist</div>
+    <div class="qp" onclick="qp('Describe this location vividly')">describe place</div>
+    <div class="qp" onclick="qp('What conflict could arise?')">conflict idea</div>
+    <div class="qp" onclick="qp('Help me develop my magic system')">magic system</div>
+    <div class="qp" onclick="qp('Give me a scene idea for Act 2')">scene idea</div>
+  </div>
+  <div class="ai-inp-row">
+    <textarea class="ai-inp" id="ai-inp" placeholder="Ask about your story…" rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendAI()">→</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lb" onclick="closeLB()">
+  <button class="lb-close" onclick="closeLB()">×</button>
+  <img id="lb-img" src="" alt="">
+  <div class="lb-cap" id="lb-cap"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">New Entry</h3>
+    <div id="modal-body"></div>
+    <div class="modal-btns">
+      <button class="btn-g" onclick="closeModal()">Cancel</button>
+      <button class="btn-p" onclick="modalConfirm()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+// ============================================================
+// PERSIST — auto-save everything to localStorage
+// ============================================================
+const SAVE_KEY = 'inkwell_data_v1';
+
+const DEFAULT_DATA = {
+  characters: [{id:'c0',name:'My Protagonist',role:'Hero',color:'#c8822a',image:null,appearance:'',personality:'',backstory:'',motivation:'',conflict:'',notes:'Your main character'}],
+  locations:[], maps:[], species:[], culture:[], magic:[], religion:[], items:[], encyclopedia:[], research:[],
+  chapters: [{id:'ch0',title:'Chapter One',content:'',wc:0}],
+  outline: {acts:[
+    {id:'a1',label:'ACT I',title:'Setup',scenes:[
+      {id:'s1',title:'Opening Scene',notes:'Introduce the world and protagonist',status:'done'},
+      {id:'s2',title:'Inciting Incident',notes:'The event that changes everything',status:'in-progress'}
+    ]},
+    {id:'a2',label:'ACT II',title:'Confrontation',scenes:[{id:'s3',title:'Rising Action',notes:'Complications mount',status:'todo'}]},
+    {id:'a3',label:'ACT III',title:'Resolution',scenes:[{id:'s4',title:'Climax',notes:'The final confrontation',status:'todo'}]}
+  ]},
+  timeline:[
+    {id:'t0',date:'Year 0',era:'The Ancient Age',title:'The Beginning',desc:'The world takes shape.',major:true},
+    {id:'t1',date:'Year 400',era:'The Ancient Age',title:'The First War',desc:'Great factions clash for the first time.',major:true}
+  ]
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function saveData() {
+  try {
+    const payload = {
+      characters: S.characters,
+      locations: S.locations,
+      maps: S.maps,
+      species: S.species,
+      culture: S.culture,
+      magic: S.magic,
+      religion: S.religion,
+      items: S.items,
+      encyclopedia: S.encyclopedia,
+      research: S.research,
+      chapters: S.chapters,
+      outline: S.outline,
+      timeline: S.timeline,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+    showSaveIndicator();
+  } catch(e) {
+    console.warn('Save failed (storage full?):', e);
+  }
+}
+
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveData, 800);
+}
+
+function showSaveIndicator() {
+  const el = document.getElementById('save-ind');
+  if (!el) return;
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 1200);
+}
+
+const saved = loadData();
+const D = saved || DEFAULT_DATA;
+
+const S = {
+  sidebarOpen: true, aiOpen: false,
+  currentPanel: 'manuscript', currentChapter: 'ch0',
+  modalCb: null, modalData: {},
+  characters: D.characters,
+  locations: D.locations,
+  maps: D.maps,
+  species: D.species,
+  culture: D.culture,
+  magic: D.magic,
+  religion: D.religion,
+  items: D.items,
+  encyclopedia: D.encyclopedia,
+  research: D.research,
+  chapters: D.chapters,
+  outline: D.outline,
+  timeline: D.timeline,
+};
+
+const SC = {done:'#5a8060','in-progress':'#c8822a',todo:'#3a3028'};
+const META = {
+  manuscript:{t:'Manuscript',s:'Write your story'},
+  outline:{t:'Outline',s:'Organize your narrative'},
+  timeline:{t:'Timeline',s:'Key events in your world'},
+  characters:{t:'Characters',s:'The people of your story'},
+  locations:{t:'Locations',s:'Places in your world'},
+  maps:{t:'Maps & Images',s:'Visual references and world maps'},
+  species:{t:'Species',s:'The beings of your world'},
+  culture:{t:'Culture',s:'Groups, societies, and customs'},
+  magic:{t:'Magic',s:'The rules of your magic'},
+  religion:{t:'Religion',s:'Gods, beliefs, and myths'},
+  items:{t:'Items',s:'Objects of power and significance'},
+  encyclopedia:{t:'Encyclopedia',s:'General world knowledge'},
+  research:{t:'Research',s:'Notes and reference material'},
+};
+const WCOLOR = {species:'#5a8060',culture:'#5060a0',magic:'#806080',religion:'#c8822a',items:'#a0803a',encyclopedia:'#607080',research:'#609060',locations:'#c05040'};
+const WICON = {species:'✺',culture:'⚘',magic:'◈',religion:'✦',items:'◇',encyclopedia:'📖',research:'🔬',locations:'⌖'};
+const WFIELDS = {
+  species:[['description','Description',true],['habitat','Habitat',false],['abilities','Abilities & Traits',true],['culture','Culture',true],['notes','Notes',true]],
+  culture:[['overview','Overview',true],['beliefs','Beliefs & Values',true],['customs','Customs & Traditions',true],['history','History',true],['notes','Notes',true]],
+  magic:[['overview','Overview',true],['source','Source of Power',false],['rules','Rules & Limitations',true],['cost','Cost / Drawbacks',true],['notes','Notes',true]],
+  religion:[['overview','Overview',true],['deity','Deity / Pantheon',false],['beliefs','Core Beliefs',true],['rituals','Rituals & Practices',true],['notes','Notes',true]],
+  items:[['description','Description',true],['origin','Origin',true],['powers','Properties / Powers',true],['history','History',true],['notes','Notes',true]],
+  encyclopedia:[['overview','Overview',true],['details','Details',true],['significance','Significance',true],['notes','Notes',true]],
+  research:[['source','Source',false],['notes','Notes',true],['quotes','Key Quotes',true],['relevance','Relevance to Story',true]],
+  locations:[['geography','Geography',true],['atmosphere','Atmosphere',true],['history','History',true],['inhabitants','Inhabitants',false],['notes','Notes',true]],
+};
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function toggleSidebar(){S.sidebarOpen=!S.sidebarOpen;document.getElementById('sidebar').classList.toggle('collapsed',!S.sidebarOpen);}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function nav(page, id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  S.currentPanel = page;
+  const m = META[page];
+  if(m){document.getElementById('tt').textContent=m.t;document.getElementById('ts').textContent=m.s;}
+  const navEl = document.getElementById('nav-'+page);
+  if(navEl) navEl.classList.add('active');
+  const addBtn = document.getElementById('add-btn');
+  addBtn.style.display='none';
+
+  const wikiPages = ['species','culture','magic','religion','items','encyclopedia','research'];
+
+  if(page==='manuscript'){
+    show('manuscript-panel'); renderChList(); addBtn.style.display='none';
+  } else if(page==='outline'){
+    show('outline-panel'); renderOutline();
+  } else if(page==='timeline'){
+    show('timeline-panel'); renderTimeline();
+  } else if(page==='characters'){
+    show('characters-panel'); renderCharGrid();
+    addBtn.style.display='inline-block'; addBtn.onclick=openCharModal;
+  } else if(page==='char-detail'){
+    show('char-detail-panel'); document.getElementById('nav-characters').classList.add('active');
+    renderCharDetail(id);
+  } else if(page==='locations'){
+    show('locations-panel'); renderWikiGrid('locations','locations-grid');
+    addBtn.style.display='inline-block'; addBtn.onclick=()=>openWikiModal('locations');
+  } else if(page==='location-detail'){
+    show('location-detail-panel'); document.getElementById('nav-locations').classList.add('active');
+    renderLocationDetail(id);
+  } else if(page==='maps'){
+    show('maps-panel'); renderMapsGrid();
+  } else if(page==='wiki-detail'){
+    show('wiki-detail-panel');
+    const sec=id.split(':')[0];
+    const navEl2=document.getElementById('nav-'+sec);
+    if(navEl2) navEl2.classList.add('active');
+    renderWikiDetail(id);
+  } else if(wikiPages.includes(page)){
+    show(page+'-panel'); renderWikiGrid(page, page+'-grid');
+    addBtn.style.display='inline-block'; addBtn.onclick=()=>openWikiModal(page);
+  }
+}
+function show(id){document.getElementById(id).classList.add('active');}
+function topAdd(){document.getElementById('add-btn').onclick();}
+
+// ============================================================
+// MANUSCRIPT
+// ============================================================
+function renderChList(){
+  document.getElementById('ch-list').innerHTML = S.chapters.map((c,i)=>`
+    <div class="ch-item ${c.id===S.currentChapter?'active':''}" onclick="loadCh('${c.id}')">
+      <div class="chn">CH ${i+1}</div>
+      <div>${c.title||'Untitled'}</div>
+    </div>
+  `).join('');
+}
+function loadCh(id){
+  S.currentChapter=id;
+  const c=S.chapters.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('ch-title').value=c.title||'';
+  document.getElementById('ms-editor').innerHTML=c.content||'';
+  updateWC(); renderChList();
+}
+function addChapter(){
+  const id='ch'+Date.now();
+  S.chapters.push({id,title:'New Chapter',content:'',wc:0});
+  S.currentChapter=id; renderChList(); loadCh(id); scheduleSave();
+}
+function updateChTitle(v){const c=S.chapters.find(x=>x.id===S.currentChapter);if(c){c.title=v;renderChList();scheduleSave();}}
+function onEdit(){const c=S.chapters.find(x=>x.id===S.currentChapter);if(c)c.content=document.getElementById('ms-editor').innerHTML;updateWC();scheduleSave();}
+function updateWC(){const t=document.getElementById('ms-editor').innerText||'';const n=t.trim()?t.trim().split(/\s+/).length:0;document.getElementById('wc').textContent=n.toLocaleString()+' words';}
+function execCmd(cmd){document.execCommand(cmd,false,null);document.getElementById('ms-editor').focus();}
+function insertBreak(){document.execCommand('insertHTML',false,'<div style="text-align:center;color:#6b5e50;margin:22px 0;letter-spacing:0.5em;">✦ ✦ ✦</div>');}
+function editorKey(e){if(e.key==='Tab'){e.preventDefault();document.execCommand('insertText',false,'    ');}}
+let focusOn=false;
+function focusMode(){
+  focusOn=!focusOn;
+  document.getElementById('ch-sidebar').style.display=focusOn?'none':'';
+  document.querySelector('.ms-toolbar').style.display=focusOn?'none':'';
+  document.getElementById('ms-area').style.padding=focusOn?'44px 24%':'44px 18%';
+  document.getElementById('focus-btn').textContent=focusOn?'Exit Focus':'Focus Mode';
+}
+
+// ============================================================
+// OUTLINE
+// ============================================================
+function renderOutline(){
+  document.getElementById('outline-body').innerHTML = S.outline.acts.map(act=>`
+    <div style="margin-bottom:26px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--amber);background:var(--amber-glow);border:1px solid var(--amber);border-radius:4px;padding:2px 10px;">${act.label}</div>
+        <input style="background:none;border:none;font-family:'Playfair Display',serif;font-size:18px;color:var(--text);outline:none;flex:1;" value="${esc(act.title)}" oninput="updAct('${act.id}',this.value)" placeholder="Act title…">
+      </div>
+      ${act.scenes.map((s,si)=>`
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 15px;margin-bottom:7px;display:flex;align-items:flex-start;gap:11px;">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);min-width:20px;padding-top:3px;">${si+1}</div>
+          <div style="flex:1;">
+            <input style="background:none;border:none;font-family:'Playfair Display',serif;font-size:15px;color:var(--text);outline:none;width:100%;margin-bottom:4px;" value="${esc(s.title)}" oninput="updScene('${act.id}','${s.id}','title',this.value)" placeholder="Scene title…">
+            <textarea style="background:none;border:none;font-family:'Crimson Text',serif;font-size:14px;color:var(--text3);outline:none;width:100%;resize:none;line-height:1.4;" rows="1" oninput="updScene('${act.id}','${s.id}','notes',this.value)" placeholder="Notes…">${esc(s.notes)}</textarea>
+          </div>
+          <div style="width:10px;height:10px;border-radius:50%;background:${SC[s.status]};margin-top:5px;flex-shrink:0;cursor:pointer;" onclick="cycleStatus('${act.id}','${s.id}',this)" title="${s.status}"></div>
+        </div>
+      `).join('')}
+      <button class="add-btn" style="width:100%;margin-top:3px;" onclick="addScene('${act.id}')">+ Add Scene</button>
+    </div>
+  `).join('') + `<button class="add-btn" onclick="addAct()">+ Add Act</button>`;
+}
+function updAct(id,v){const a=S.outline.acts.find(x=>x.id===id);if(a){a.title=v;scheduleSave();}}
+function updScene(aid,sid,k,v){const a=S.outline.acts.find(x=>x.id===aid);if(a){const s=a.scenes.find(x=>x.id===sid);if(s){s[k]=v;scheduleSave();}}}
+function cycleStatus(aid,sid,el){const a=S.outline.acts.find(x=>x.id===aid);const s=a.scenes.find(x=>x.id===sid);const st=['todo','in-progress','done'];s.status=st[(st.indexOf(s.status)+1)%3];el.style.background=SC[s.status];el.title=s.status;scheduleSave();}
+function addScene(aid){const a=S.outline.acts.find(x=>x.id===aid);a.scenes.push({id:'s'+Date.now(),title:'New Scene',notes:'',status:'todo'});renderOutline();scheduleSave();}
+function addAct(){const L=['ACT I','ACT II','ACT III','ACT IV','ACT V'];S.outline.acts.push({id:'a'+Date.now(),label:L[S.outline.acts.length]||'ACT '+(S.outline.acts.length+1),title:'New Act',scenes:[]});renderOutline();scheduleSave();}
+
+// ============================================================
+// TIMELINE
+// ============================================================
+function renderTimeline(){
+  document.getElementById('tl-wrap').innerHTML = '<div class="tl-line"></div>' + S.timeline.map(e=>`
+    <div class="tl-event">
+      <div class="tl-date-col"><div class="tl-date">${esc(e.date)}</div><div class="tl-era">${esc(e.era)}</div></div>
+      <div class="tl-dot ${e.major?'':'minor'}"></div>
+      <div class="tl-content"><h4>${esc(e.title)}</h4><p>${esc(e.desc)}</p></div>
+    </div>
+  `).join('');
+}
+function addTimelineEvent(){
+  openModal('Add Timeline Event',`
+    <div class="fg"><div class="fl">Date / Year</div><input class="fi" id="m-date" placeholder="e.g. Year 400, The 3rd Era…"></div>
+    <div class="fg"><div class="fl">Era / Age</div><input class="fi" id="m-era" placeholder="e.g. The Ancient Age…"></div>
+    <div class="fg"><div class="fl">Event Title</div><input class="fi" id="m-etitle" placeholder="Name of this event…"></div>
+    <div class="fg"><div class="fl">Description</div><textarea class="fi" id="m-edesc" rows="3" placeholder="What happened?"></textarea></div>
+    <div style="display:flex;align-items:center;gap:9px;"><input type="checkbox" id="m-major" checked style="accent-color:var(--amber)"><label for="m-major" style="font-size:14px;color:var(--text2);">Major event</label></div>
+  `,()=>{
+    S.timeline.push({id:'t'+Date.now(),date:document.getElementById('m-date').value||'Unknown',era:document.getElementById('m-era').value||'',title:document.getElementById('m-etitle').value||'Unnamed Event',desc:document.getElementById('m-edesc').value||'',major:document.getElementById('m-major').checked});
+    renderTimeline();scheduleSave();
+  });
+}
+
+// ============================================================
+// CHARACTERS
+// ============================================================
+function renderCharGrid(){
+  document.getElementById('char-grid').innerHTML = S.characters.map(c=>`
+    <div class="char-card" onclick="nav('char-detail','${c.id}')">
+      <div class="char-bar" style="background:${c.color}"></div>
+      <div class="char-portrait">
+        ${c.image?`<img src="${c.image}" alt="${esc(c.name)}">`:`<div class="char-pp">◉</div>`}
+        <div class="char-ov">📷 Change Photo</div>
+      </div>
+      <div class="char-body"><h4>${esc(c.name)}</h4><p>${esc(c.role||'Character')}</p></div>
+    </div>
+  `).join('') + `<div class="add-card" onclick="openCharModal()"><div class="plus">+</div><div style="font-size:12px;font-family:'DM Mono',monospace;">New Character</div></div>`;
+}
+
+function openCharModal(){
+  S.modalData.color='#c8822a';
+  openModal('New Character',`
+    <div class="fg"><div class="fl">Name</div><input class="fi" id="m-name" placeholder="Character name…"></div>
+    <div class="fg"><div class="fl">Role</div><input class="fi" id="m-role" placeholder="e.g. Hero, Villain, Mentor…"></div>
+    <div class="fl">Color Tag</div>
+    <div class="color-row">
+      ${['#c8822a','#c05040','#5a8060','#5060a0','#806080','#607080','#a0803a','#609060'].map((c,i)=>`<div class="co ${i===0?'sel':''}" style="background:${c}" onclick="selColor(this,'${c}')"></div>`).join('')}
+    </div>
+  `,()=>{
+    const name=document.getElementById('m-name').value.trim();
+    if(!name) return;
+    const c={id:'c'+Date.now(),name,role:document.getElementById('m-role').value,color:S.modalData.color||'#c8822a',image:null,appearance:'',personality:'',backstory:'',motivation:'',conflict:'',notes:''};
+    S.characters.push(c); nav('char-detail',c.id); scheduleSave();
+  });
+}
+
+function renderCharDetail(id){
+  const c=S.characters.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('tt').textContent=c.name;
+  document.getElementById('ts').textContent=c.role||'Character';
+  document.getElementById('char-detail').innerHTML=`
+    <div style="display:flex;gap:22px;flex-wrap:wrap;margin-bottom:6px;">
+      <div style="flex:0 0 190px;">
+        <div class="img-upload ${c.image?'has-img':''}" onclick="trigCharImg('${c.id}')">
+          ${c.image?`<img src="${c.image}" alt="${esc(c.name)}">`:`<div style="font-size:38px;opacity:0.2;">◉</div><p>Upload portrait</p>`}
+        </div>
+        <input type="file" id="ci-${c.id}" accept="image/*" style="display:none" onchange="loadCharImg('${c.id}',this)">
+        ${c.image?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);cursor:pointer;margin-top:4px;text-align:center;" onclick="trigCharImg('${c.id}')">Replace image</div>`:''}
+      </div>
+      <div style="flex:1;min-width:180px;">
+        <div class="fg"><div class="fl">Name</div><input class="fi" value="${esc(c.name)}" oninput="updChar('${c.id}','name',this.value)"></div>
+        <div class="fg"><div class="fl">Role / Archetype</div><input class="fi" value="${esc(c.role||'')}" oninput="updChar('${c.id}','role',this.value)" placeholder="Hero, Trickster…"></div>
+        <div class="fg"><div class="fl">Appearance</div><textarea class="fi" rows="3" oninput="updChar('${c.id}','appearance',this.value)" placeholder="Physical description…">${esc(c.appearance||'')}</textarea></div>
+      </div>
+    </div>
+    <div class="fg"><div class="fl">Personality & Voice</div><textarea class="fi" rows="3" oninput="updChar('${c.id}','personality',this.value)" placeholder="How they speak, think, feel…">${esc(c.personality||'')}</textarea></div>
+    <div class="fg"><div class="fl">Backstory</div><textarea class="fi" rows="4" oninput="updChar('${c.id}','backstory',this.value)" placeholder="Their history and formative events…">${esc(c.backstory||'')}</textarea></div>
+    <div class="fg"><div class="fl">Core Motivation</div><input class="fi" value="${esc(c.motivation||'')}" oninput="updChar('${c.id}','motivation',this.value)" placeholder="What do they want most?"></div>
+    <div class="fg"><div class="fl">Internal / External Conflict</div><textarea class="fi" rows="3" oninput="updChar('${c.id}','conflict',this.value)" placeholder="What stands in their way?">${esc(c.conflict||'')}</textarea></div>
+    <div class="fg"><div class="fl">Story Notes</div><textarea class="fi" rows="3" oninput="updChar('${c.id}','notes',this.value)" placeholder="Plot connections, arcs…">${esc(c.notes||'')}</textarea></div>
+    <div style="padding-top:14px;border-top:1px solid var(--border);display:flex;gap:9px;">
+      <button onclick="nav('characters')" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;">← Back</button>
+      <button onclick="delChar('${c.id}')" style="background:none;border:1px solid var(--red);color:var(--red);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;">Delete</button>
+    </div>
+  `;
+}
+function trigCharImg(id){document.getElementById('ci-'+id).click();}
+function loadCharImg(id,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const c=S.characters.find(x=>x.id===id);if(c){c.image=e.target.result;renderCharDetail(id);scheduleSave();}};r.readAsDataURL(f);}
+function updChar(id,k,v){const c=S.characters.find(x=>x.id===id);if(c){c[k]=v;if(k==='name')document.getElementById('tt').textContent=v;if(k==='role')document.getElementById('ts').textContent=v||'Character';scheduleSave();}}
+function delChar(id){if(!confirm('Delete this character?'))return;S.characters=S.characters.filter(x=>x.id!==id);nav('characters');scheduleSave();}
+
+// ============================================================
+// LOCATIONS
+// ============================================================
+function renderLocationDetail(id){
+  const loc=S.locations.find(x=>x.id===id);
+  if(!loc) return;
+  document.getElementById('tt').textContent=loc.name;
+  document.getElementById('ts').textContent='Location';
+  document.getElementById('location-detail').innerHTML=`
+    <div style="height:3px;background:${WCOLOR.locations};margin:-26px -30px 22px;"></div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:6px;">
+      <div style="flex:0 0 180px;">
+        <div class="img-upload ${loc.image?'has-img':''}" onclick="trigWikiImg('locations','${loc.id}')">
+          ${loc.image?`<img src="${loc.image}">`:`<div style="font-size:36px;opacity:0.2;">⌖</div><p>Upload image</p>`}
+        </div>
+        <input type="file" id="wi-${loc.id}" accept="image/*" style="display:none" onchange="loadWikiImg('locations','${loc.id}',this)">
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <div class="fg"><div class="fl">Name</div><input class="fi" value="${esc(loc.name)}" oninput="updWiki('locations','${loc.id}','name',this.value)"></div>
+        <div class="fg"><div class="fl">Type</div><input class="fi" value="${esc(loc.type||'')}" oninput="updWiki('locations','${loc.id}','type',this.value)" placeholder="City, Forest, Dungeon…"></div>
+      </div>
+    </div>
+    ${WFIELDS.locations.map(([k,l,m])=>`<div class="fg"><div class="fl">${l}</div>${m?`<textarea class="fi" rows="3" oninput="updWiki('locations','${loc.id}','${k}',this.value)" placeholder="${l}…">${esc(loc[k]||'')}</textarea>`:`<input class="fi" value="${esc(loc[k]||'')}" oninput="updWiki('locations','${loc.id}','${k}',this.value)" placeholder="${l}…">`}</div>`).join('')}
+    <div style="padding-top:14px;border-top:1px solid var(--border);display:flex;gap:9px;">
+      <button onclick="nav('locations')" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;">← Back</button>
+      <button onclick="delWiki('locations','${loc.id}')" style="background:none;border:1px solid var(--red);color:var(--red);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;">Delete</button>
+    </div>
+  `;
+}
+
+// ============================================================
+// MAPS
+// ============================================================
+function renderMapsGrid(){
+  const dz=document.getElementById('dz');
+  if(!dz._dzSet){
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dov');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('dov'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dov');handleUpload(e.dataTransfer.files);});
+    dz._dzSet=true;
+  }
+  document.getElementById('maps-grid').innerHTML = S.maps.map(m=>`
+    <div class="map-card" onclick="openLB('${m.id}')">
+      <div class="map-img-wrap">${m.data?`<img src="${m.data}" alt="${esc(m.name)}">`:`<div class="map-ph">🗺</div>`}</div>
+      <div class="map-body"><h4>${esc(m.name)}</h4><p>${esc(m.tag)} · ${esc(m.date)}</p></div>
+    </div>
+  `).join('');
+}
+function handleUpload(files){
+  Array.from(files).filter(f=>f.type.startsWith('image/')).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{S.maps.push({id:'m'+Date.now()+Math.random(),name:f.name.replace(/\.[^.]+$/,''),data:e.target.result,tag:'Image',date:new Date().toLocaleDateString()});renderMapsGrid();scheduleSave();};
+    r.readAsDataURL(f);
+  });
+}
+function openLB(id){const m=S.maps.find(x=>x.id===id);if(!m)return;document.getElementById('lb-img').src=m.data;document.getElementById('lb-cap').textContent=m.name;document.getElementById('lb').classList.add('open');}
+function closeLB(){document.getElementById('lb').classList.remove('open');}
+
+// ============================================================
+// WIKI SECTIONS
+// ============================================================
+function renderWikiGrid(sec,gridId){
+  const items=S[sec]||[];
+  const color=WCOLOR[sec]||'#c8822a';
+  const icon=WICON[sec]||'●';
+  document.getElementById(gridId).innerHTML = items.map(item=>`
+    <div class="wiki-card" onclick="nav('wiki-detail','${sec}:${item.id}')">
+      <div class="wc-top" style="background:${color}"></div>
+      <div class="wc-body">
+        <div class="wc-icon">${icon}</div>
+        <h4>${esc(item.name)}</h4>
+        <p>${esc(item.overview||item.description||item.notes||'No description yet').substring(0,80)}${(item.overview||item.description||item.notes||'').length>80?'…':''}</p>
+      </div>
+    </div>
+  `).join('') + `<div class="add-card" onclick="openWikiModal('${sec}')"><div class="plus">+</div><div style="font-size:12px;font-family:'DM Mono',monospace;">New Entry</div></div>`;
+}
+
+function renderWikiDetail(combined){
+  const [sec,id]=combined.split(':');
+  const item=(S[sec]||[]).find(x=>x.id===id);
+  if(!item) return;
+  const fields=WFIELDS[sec]||[['notes','Notes',true]];
+  const color=WCOLOR[sec]||'#c8822a';
+  const icon=WICON[sec]||'●';
+  const hasImg=['locations','species','culture'].includes(sec);
+  document.getElementById('tt').textContent=item.name;
+  document.getElementById('ts').textContent=sec.charAt(0).toUpperCase()+sec.slice(1);
+
+  document.getElementById('wiki-detail').innerHTML=`
+    <div style="height:3px;background:${color};margin:-26px -30px 22px;"></div>
+    ${hasImg?`
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:6px;">
+        <div style="flex:0 0 180px;">
+          <div class="img-upload ${item.image?'has-img':''}" onclick="trigWikiImg('${sec}','${id}')">
+            ${item.image?`<img src="${item.image}">`:`<div style="font-size:36px;opacity:0.2;">${icon}</div><p>Upload image</p>`}
+          </div>
+          <input type="file" id="wi-${id}" accept="image/*" style="display:none" onchange="loadWikiImg('${sec}','${id}',this)">
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div class="fg"><div class="fl">Name</div><input class="fi" value="${esc(item.name)}" oninput="updWiki('${sec}','${id}','name',this.value)"></div>
+        </div>
+      </div>
+    `:`<div class="fg"><div class="fl">Name</div><input class="fi" value="${esc(item.name)}" oninput="updWiki('${sec}','${id}','name',this.value)"></div>`}
+    ${fields.map(([k,l,m])=>`<div class="fg"><div class="fl">${l}</div>${m?`<textarea class="fi" rows="3" oninput="updWiki('${sec}','${id}','${k}',this.value)" placeholder="${l}…">${esc(item[k]||'')}</textarea>`:`<input class="fi" value="${esc(item[k]||'')}" oninput="updWiki('${sec}','${id}','${k}',this.value)" placeholder="${l}…">`}</div>`).join('')}
+    <div style="padding-top:14px;border-top:1px solid var(--border);display:flex;gap:9px;">
+      <button onclick="nav('${sec}')" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;">← Back</button>
+      <button onclick="delWiki('${sec}','${id}')" style="background:none;border:1px solid var(--red);color:var(--red);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;">Delete</button>
+    </div>
+  `;
+}
+
+function trigWikiImg(sec,id){document.getElementById('wi-'+id).click();}
+function loadWikiImg(sec,id,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const item=(S[sec]||[]).find(x=>x.id===id);if(item){item.image=e.target.result;if(sec==='locations')renderLocationDetail(id);else renderWikiDetail(sec+':'+id);scheduleSave();}};r.readAsDataURL(f);}
+function updWiki(sec,id,k,v){const item=(S[sec]||[]).find(x=>x.id===id);if(item){item[k]=v;if(k==='name')document.getElementById('tt').textContent=v;scheduleSave();}}
+function delWiki(sec,id){if(!confirm('Delete this entry?'))return;S[sec]=S[sec].filter(x=>x.id!==id);nav(sec);scheduleSave();}
+
+function openWikiModal(sec){
+  const label=sec.charAt(0).toUpperCase()+sec.slice(1).replace(/s$/,' Entry');
+  openModal('New '+label,`
+    <div class="fg"><div class="fl">Name</div><input class="fi" id="m-name" placeholder="Name…"></div>
+    <div class="fg"><div class="fl">Brief Description</div><textarea class="fi" id="m-ov" rows="3" placeholder="Short overview…"></textarea></div>
+  `,()=>{
+    const name=document.getElementById('m-name').value.trim();
+    if(!name) return;
+    if(!S[sec]) S[sec]=[];
+    const item={id:'w'+Date.now(),name,overview:document.getElementById('m-ov').value,notes:''};
+    S[sec].push(item);
+    scheduleSave();
+    if(sec==='locations') nav('location-detail',item.id);
+    else nav('wiki-detail',sec+':'+item.id);
+  });
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(title,body,cb){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal').classList.add('open');
+  S.modalCb=cb;
+  setTimeout(()=>document.querySelector('#modal-body input,#modal-body textarea')?.focus(),60);
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');S.modalCb=null;}
+function modalConfirm(){if(S.modalCb)S.modalCb();closeModal();}
+function selColor(el,color){document.querySelectorAll('.co').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');S.modalData.color=color;}
+
+// ============================================================
+// AI
+// ============================================================
+function toggleAI(){S.aiOpen=!S.aiOpen;document.getElementById('ai-panel').classList.toggle('open',S.aiOpen);}
+function qp(text){document.getElementById('ai-inp').value=text;sendAI();}
+
+function getCtx(){
+  const chars=S.characters.map(c=>`${c.name} (${c.role||''}): ${c.backstory||''} ${c.motivation||''}`).join('\n');
+  const locs=S.locations.map(l=>`${l.name}: ${l.geography||''}`).join('\n');
+  const magic=S.magic.map(m=>`${m.name}: ${m.overview||''}`).join('\n');
+  const scenes=S.outline.acts.flatMap(a=>a.scenes.map(s=>`${a.title} > ${s.title}: ${s.notes}`)).join('\n');
+  return `Story context:\nCHARACTERS:\n${chars||'None'}\nLOCATIONS:\n${locs||'None'}\nMAGIC:\n${magic||'None'}\nOUTLINE:\n${scenes||'None'}`;
+}
+
+async function sendAI(){
+  const inp=document.getElementById('ai-inp');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  const msgs=document.getElementById('ai-msgs');
+  const typing=document.getElementById('typing');
+  const btn=document.getElementById('send-btn');
+  msgs.innerHTML+=`<div class="msg user">${esc(msg)}</div>`;
+  inp.value=''; inp.style.height='auto';
+  msgs.scrollTop=msgs.scrollHeight;
+  typing.classList.add('show'); btn.disabled=true;
+  const sys=`You are a creative writing assistant in Inkwell, a personal story-building tool. Help writers develop their worlds, characters, and plots. Be creative, specific, and inspiring. Keep responses concise but rich — 2-4 paragraphs unless a list is clearly more useful. Never be generic; connect to the user's specific story world when context is available.\n\n${getCtx()}`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:[{role:"user",content:msg}]})
+    });
+    const data=await res.json();
+    const text=data.content?.map(b=>b.text||'').join('')||'Sorry, I had trouble responding.';
+    typing.classList.remove('show');
+    msgs.innerHTML+=`<div class="msg ai">${esc(text).replace(/\n/g,'<br>')}</div>`;
+  }catch(e){
+    typing.classList.remove('show');
+    msgs.innerHTML+=`<div class="msg sys">Connection error. Please try again.</div>`;
+  }
+  btn.disabled=false;
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeModal();closeLB();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='\\'){e.preventDefault();toggleSidebar();}
+});
+document.getElementById('modal-body').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName!=='TEXTAREA'){e.preventDefault();modalConfirm();}});
+
+// ============================================================
+// SERVICE WORKER — makes it work offline
+// ============================================================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW:', e));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+nav('manuscript');
+loadCh(S.currentChapter || 'ch0');
+</script>
+</body>
+</html>
